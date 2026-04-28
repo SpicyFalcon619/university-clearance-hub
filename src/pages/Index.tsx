@@ -1,16 +1,33 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { StudentDashboard } from "@/features/student/StudentDashboard";
+import { DepartmentDashboard } from "@/features/dept/DepartmentDashboard";
+import { MasterDashboard } from "@/features/master/MasterDashboard";
+import { AppShell } from "@/components/AppShell";
+import { Loader2 } from "lucide-react";
 
-// IMPORTANT: Fully REPLACE this with your own code
-const PlaceholderIndex = () => {
-  // PLACEHOLDER: Replace this entire return statement with the user's app.
-  // The inline background color is intentionally not part of the design system.
+export default function Index() {
+  const { session, role, loading } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!loading && !session) navigate("/auth", { replace: true });
+  }, [loading, session, navigate]);
+
+  if (loading || !session) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
   return (
-    <div className="flex min-h-screen items-center justify-center" style={{ backgroundColor: '#fcfbf8' }}>
-      <img data-lovable-blank-page-placeholder="REMOVE_THIS" src="/placeholder.svg" alt="Your app will live here!" />
-    </div>
+    <AppShell>
+      {role === "master_admin" ? <MasterDashboard /> :
+       role === "dept_admin" ? <DepartmentDashboard /> :
+       <StudentDashboard />}
+    </AppShell>
   );
-};
-
-const Index = PlaceholderIndex;
-
-export default Index;
+}

@@ -57,6 +57,29 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        status: {
+          approved: "hsl(var(--status-approved))",
+          "approved-bg": "hsl(var(--status-approved-bg))",
+          pending: "hsl(var(--status-pending))",
+          "pending-bg": "hsl(var(--status-pending-bg))",
+          denied: "hsl(var(--status-denied))",
+          "denied-bg": "hsl(var(--status-denied-bg))",
+          emergency: "hsl(var(--status-emergency))",
+          "emergency-bg": "hsl(var(--status-emergency-bg))",
+        },
+        surface: {
+          1: "hsl(var(--surface-1))",
+          2: "hsl(var(--surface-2))",
+          3: "hsl(var(--surface-3))",
+        },
+      },
+      fontFamily: {
+        sans: ['Inter', 'ui-sans-serif', 'system-ui'],
+      },
+      boxShadow: {
+        'elevate-sm': 'var(--shadow-sm)',
+        'elevate-md': 'var(--shadow-md)',
+        'elevate-lg': 'var(--shadow-lg)',
       },
       borderRadius: {
         lg: "var(--radius)",
