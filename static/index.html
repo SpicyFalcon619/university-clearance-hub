@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Online Clearance System</title>
+  <meta name="description" content="University Online Clearance System — track dues, route approvals, and issue exit certificates across departments." />
+  <link rel="canonical" href="./index.html" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div id="root">
+    <div class="center-screen"><span class="loader"></span></div>
+  </div>
+
+  <!-- Chart.js for analytics -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <!-- Supabase JS (only used when MODE = "cloud") -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <script src="./config.js"></script>
+  <script src="./js/utils.js"></script>
+  <script src="./js/db.js"></script>
+  <script src="./js/cert.js"></script>
+  <script src="./js/pages.js"></script>
+  <script src="./js/app.js"></script>
+  <script>App.init();</script>
+
+  <!-- JSON-LD -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "Online Clearance System",
+    "applicationCategory": "EducationalApplication",
+    "operatingSystem": "Web"
+  }
+  </script>
+</body>
+</html>
