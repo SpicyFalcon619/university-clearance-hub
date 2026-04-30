@@ -62,7 +62,7 @@ export default function Students() {
         <div className="flex justify-between gap-3 flex-wrap">
           <div>
             <h1 className="text-2xl font-semibold">Users</h1>
-            <p className="text-sm text-muted-foreground">Search students and assign administrator roles.</p>
+            <p className="text-sm text-muted-foreground">All accounts — students and administrators. Search and assign roles.</p>
           </div>
           <Input placeholder="Search…" className="w-64" value={q} onChange={(e) => setQ(e.target.value)} />
         </div>
