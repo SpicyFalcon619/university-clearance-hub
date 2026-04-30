@@ -28,17 +28,26 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Verify user owns the application
+    // Verify auth
     const { data: authUser, error: authErr } = await supabaseClient.auth.getUser();
     if (authErr || !authUser?.user) throw new Error("Unauthorized");
-    
-    // Fetch using service role but strictly filter by student_id
-    const { data: app, error: appErr } = await supabaseService
+
+    // Check if requester is master_admin
+    const { data: roleRow } = await supabaseService
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', authUser.user.id)
+      .eq('role', 'master_admin')
+      .maybeSingle();
+    const isMaster = !!roleRow;
+
+    // Fetch application: master_admin can fetch any, students only their own
+    let query = supabaseService
       .from('applications')
       .select('*, profiles(full_name), department_status(status, departments(name))')
-      .eq('id', applicationId)
-      .eq('student_id', authUser.user.id)
-      .single();
+      .eq('id', applicationId);
+    if (!isMaster) query = query.eq('student_id', authUser.user.id);
+    const { data: app, error: appErr } = await query.single();
 
     if (appErr || !app) throw new Error("Application not found or unauthorized.");
     if (app.overall_status !== 'completed') {
