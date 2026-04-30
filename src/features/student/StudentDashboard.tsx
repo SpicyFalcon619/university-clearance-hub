@@ -6,10 +6,9 @@ import { Application, DeptStatusRow, Department } from "@/types/clearance";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/StatusBadge";
-import { Plus, FileText, Download, Sparkles, RotateCcw, AlertTriangle, MessageSquare } from "lucide-react";
+import { Loader2, Plus, FileText, Download, Sparkles, RotateCcw, AlertTriangle, MessageSquare } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
-import { generateCertificate } from "@/lib/certificate";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -150,21 +149,30 @@ function ApplicationCard({ app, statuses, depts, onResub }: {
   const progress = Math.round((approved / total) * 100);
   const completed = app.overall_status === "completed";
 
+  const [generatingCert, setGeneratingCert] = useState(false);
+
   async function downloadCert() {
-    let ref = app.certificate_ref;
-    if (!ref) {
-      ref = `CL-${new Date().getFullYear()}-${app.id.slice(0, 8).toUpperCase()}`;
-      await supabase.from("applications").update({ certificate_ref: ref, certificate_issued_at: new Date().toISOString() }).eq("id", app.id);
+    setGeneratingCert(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-certificate', {
+        body: { applicationId: app.id },
+      });
+      if (error) throw error;
+      
+      const blob = new Blob([data], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Clearance-Certificate.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+      
+      toast.success("Certificate downloaded successfully!");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to generate certificate.");
+    } finally {
+      setGeneratingCert(false);
     }
-    const { data: prof } = await supabase.from("profiles").select("*").eq("id", app.student_id).single();
-    generateCertificate({
-      reference: ref!,
-      studentName: prof?.full_name || "Student",
-      course: app.course,
-      batch: app.batch,
-      issuedAt: new Date(),
-      departments: depts.map(d => d.name),
-    });
   }
 
   return (
@@ -237,8 +245,9 @@ function ApplicationCard({ app, statuses, depts, onResub }: {
               <span className="text-muted-foreground">Certificate unlocks once all departments approve.</span>
             )}
           </div>
-          <Button disabled={!completed} onClick={downloadCert}>
-            <Download className="w-4 h-4 mr-1.5" />Download Certificate
+          <Button disabled={!completed || generatingCert} onClick={downloadCert}>
+            {generatingCert ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Download className="w-4 h-4 mr-1.5" />}
+            {generatingCert ? "Generating..." : "Download Certificate"}
           </Button>
         </div>
       </CardContent>
