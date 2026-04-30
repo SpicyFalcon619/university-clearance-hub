@@ -4,99 +4,109 @@
 
 @layer base {
   :root {
-    /* Linear-style modern minimal — neutral grays + blue accent */
-    --background: 0 0% 100%;
-    --foreground: 224 16% 12%;
+    /* UIU brand palette — orange accent on warm white */
+    --background: 30 40% 99%;
+    --foreground: 20 30% 12%;
 
     --card: 0 0% 100%;
-    --card-foreground: 224 16% 12%;
+    --card-foreground: 20 30% 12%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 224 16% 12%;
+    --popover-foreground: 20 30% 12%;
 
-    --primary: 224 16% 12%;
+    /* Primary = UIU orange */
+    --primary: 22 95% 53%;
     --primary-foreground: 0 0% 100%;
+    --primary-glow: 28 100% 62%;
 
-    --secondary: 220 14% 96%;
-    --secondary-foreground: 224 16% 12%;
+    --secondary: 30 35% 95%;
+    --secondary-foreground: 20 30% 15%;
 
-    --muted: 220 14% 96%;
-    --muted-foreground: 220 9% 46%;
+    --muted: 30 25% 95%;
+    --muted-foreground: 25 10% 42%;
 
-    --accent: 224 76% 56%;
+    --accent: 22 95% 53%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 224 76% 56%;
+    --border: 28 30% 89%;
+    --input: 28 30% 89%;
+    --ring: 22 95% 53%;
 
-    --radius: 0.625rem;
+    --radius: 0.75rem;
 
-    /* Status tokens */
-    --status-approved: 142 71% 41%;
-    --status-approved-bg: 142 71% 95%;
-    --status-pending: 38 92% 50%;
-    --status-pending-bg: 38 92% 95%;
+    /* Status tokens — colorful but moderate */
+    --status-approved: 142 65% 38%;
+    --status-approved-bg: 142 65% 94%;
+    --status-pending: 38 92% 48%;
+    --status-pending-bg: 38 92% 94%;
     --status-denied: 0 72% 51%;
     --status-denied-bg: 0 72% 95%;
     --status-emergency: 14 91% 54%;
-    --status-emergency-bg: 14 91% 95%;
+    --status-emergency-bg: 14 91% 94%;
 
-    /* Surfaces */
+    /* Surfaces — warm whites */
     --surface-1: 0 0% 100%;
-    --surface-2: 220 14% 98%;
-    --surface-3: 220 14% 96%;
+    --surface-2: 30 40% 97%;
+    --surface-3: 30 35% 94%;
+
+    /* Brand gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(22 95% 53%), hsl(28 100% 62%));
+    --gradient-warm: linear-gradient(180deg, hsl(30 60% 98%), hsl(30 40% 95%));
 
     /* Shadows */
-    --shadow-sm: 0 1px 2px 0 hsl(224 16% 12% / 0.05);
-    --shadow-md: 0 1px 3px 0 hsl(224 16% 12% / 0.06), 0 1px 2px -1px hsl(224 16% 12% / 0.04);
-    --shadow-lg: 0 10px 25px -5px hsl(224 16% 12% / 0.08), 0 4px 10px -4px hsl(224 16% 12% / 0.04);
+    --shadow-sm: 0 1px 2px 0 hsl(22 50% 30% / 0.06);
+    --shadow-md: 0 2px 6px -1px hsl(22 50% 30% / 0.08), 0 1px 3px -1px hsl(22 50% 30% / 0.05);
+    --shadow-lg: 0 12px 30px -8px hsl(22 80% 40% / 0.18), 0 4px 10px -4px hsl(22 50% 30% / 0.06);
+    --shadow-glow: 0 0 0 4px hsl(22 95% 53% / 0.12);
 
     /* Sidebar */
-    --sidebar-background: 220 14% 98%;
-    --sidebar-foreground: 224 16% 20%;
-    --sidebar-primary: 224 76% 56%;
+    --sidebar-background: 30 40% 97%;
+    --sidebar-foreground: 20 25% 22%;
+    --sidebar-primary: 22 95% 53%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 14% 94%;
-    --sidebar-accent-foreground: 224 16% 12%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 224 76% 56%;
+    --sidebar-accent: 30 40% 92%;
+    --sidebar-accent-foreground: 20 30% 15%;
+    --sidebar-border: 28 30% 89%;
+    --sidebar-ring: 22 95% 53%;
   }
 
   .dark {
-    --background: 224 20% 8%;
-    --foreground: 220 14% 96%;
-    --card: 224 18% 11%;
-    --card-foreground: 220 14% 96%;
-    --popover: 224 18% 11%;
-    --popover-foreground: 220 14% 96%;
-    --primary: 220 14% 96%;
-    --primary-foreground: 224 16% 12%;
-    --secondary: 224 14% 16%;
-    --secondary-foreground: 220 14% 96%;
-    --muted: 224 14% 16%;
-    --muted-foreground: 220 9% 60%;
-    --accent: 224 76% 60%;
+    --background: 20 20% 8%;
+    --foreground: 30 25% 95%;
+    --card: 20 18% 11%;
+    --card-foreground: 30 25% 95%;
+    --popover: 20 18% 11%;
+    --popover-foreground: 30 25% 95%;
+    --primary: 22 95% 56%;
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 28 100% 65%;
+    --secondary: 20 14% 16%;
+    --secondary-foreground: 30 25% 95%;
+    --muted: 20 14% 16%;
+    --muted-foreground: 25 10% 65%;
+    --accent: 22 95% 56%;
     --accent-foreground: 0 0% 100%;
     --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 100%;
-    --border: 224 14% 18%;
-    --input: 224 14% 18%;
-    --ring: 224 76% 60%;
-    --surface-1: 224 18% 11%;
-    --surface-2: 224 16% 13%;
-    --surface-3: 224 14% 16%;
-    --sidebar-background: 224 18% 10%;
-    --sidebar-foreground: 220 14% 90%;
-    --sidebar-primary: 224 76% 60%;
+    --border: 20 14% 20%;
+    --input: 20 14% 20%;
+    --ring: 22 95% 56%;
+    --surface-1: 20 18% 11%;
+    --surface-2: 20 16% 13%;
+    --surface-3: 20 14% 16%;
+    --gradient-primary: linear-gradient(135deg, hsl(22 95% 56%), hsl(28 100% 65%));
+    --gradient-warm: linear-gradient(180deg, hsl(20 18% 12%), hsl(20 16% 9%));
+    --sidebar-background: 20 18% 10%;
+    --sidebar-foreground: 30 20% 88%;
+    --sidebar-primary: 22 95% 56%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 224 14% 16%;
-    --sidebar-accent-foreground: 220 14% 96%;
-    --sidebar-border: 224 14% 18%;
-    --sidebar-ring: 224 76% 60%;
+    --sidebar-accent: 20 14% 16%;
+    --sidebar-accent-foreground: 30 25% 95%;
+    --sidebar-border: 20 14% 20%;
+    --sidebar-ring: 22 95% 56%;
   }
 }
 
@@ -116,6 +126,31 @@
     @apply inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium border;
   }
   .surface-1 { background: hsl(var(--surface-1)); }
-  .surface-2 { background: hsl(var(--surface-2)); }
+  .surface-2 { background: var(--gradient-warm); }
   .surface-3 { background: hsl(var(--surface-3)); }
+  .brand-gradient { background: var(--gradient-primary); }
+  .brand-text-gradient {
+    background: var(--gradient-primary);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  /* Animated tab bar */
+  .tab-bar {
+    @apply relative inline-flex items-center gap-1 p-1 rounded-full border border-border bg-card/60 backdrop-blur;
+    box-shadow: var(--shadow-sm);
+  }
+  .tab-item {
+    @apply relative z-10 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium text-muted-foreground transition-colors duration-200;
+  }
+  .tab-item:hover { @apply text-foreground; }
+  .tab-item[data-active="true"] { @apply text-primary-foreground; }
+  .tab-indicator {
+    @apply absolute top-1 bottom-1 rounded-full;
+    background: var(--gradient-primary);
+    box-shadow: var(--shadow-glow);
+    transition: left 320ms cubic-bezier(0.4, 0, 0.2, 1), width 320ms cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 0;
+  }
 }
