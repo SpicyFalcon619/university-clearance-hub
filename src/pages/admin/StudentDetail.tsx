@@ -55,15 +55,22 @@ export default function StudentDetail() {
   }
 
   async function downloadCert(app: any) {
-    let ref = app.certificate_ref;
-    if (!ref) {
-      ref = `CL-${new Date().getFullYear()}-${app.id.slice(0, 8).toUpperCase()}`;
-      await supabase.from("applications").update({ certificate_ref: ref, certificate_issued_at: new Date().toISOString() }).eq("id", app.id);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-certificate", {
+        body: { applicationId: app.id },
+      });
+      if (error) throw error;
+      const blob = data instanceof Blob ? data : new Blob([data], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `Clearance-Certificate-${app.id.slice(0, 8)}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+      load();
+    } catch (e: any) {
+      toast.error(e.message || "Failed to generate certificate");
     }
-    generateCertificate({
-      reference: ref, studentName: profile?.full_name || "Student", course: app.course, batch: app.batch,
-      issuedAt: new Date(), departments: depts.map(d => d.name),
-    });
   }
 
   return (
