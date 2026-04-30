@@ -56,11 +56,26 @@ export default function StudentDetail() {
 
   async function downloadCert(app: any) {
     try {
-      const { data, error } = await supabase.functions.invoke("generate-certificate", {
-        body: { applicationId: app.id },
-      });
-      if (error) throw error;
-      const blob = data instanceof Blob ? data : new Blob([data], { type: "application/pdf" });
+      const { data: sess } = await supabase.auth.getSession();
+      const token = sess?.session?.access_token;
+      if (!token) throw new Error("Not signed in");
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-certificate`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          },
+          body: JSON.stringify({ applicationId: app.id }),
+        }
+      );
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || `Failed (${res.status})`);
+      }
+      const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -70,6 +85,18 @@ export default function StudentDetail() {
       load();
     } catch (e: any) {
       toast.error(e.message || "Failed to generate certificate");
+    }
+  }
+
+  async function viewDoc(d: any) {
+    try {
+      const { data, error } = await supabase.storage
+        .from("clearance-docs")
+        .createSignedUrl(d.file_path, 60 * 5);
+      if (error) throw error;
+      window.open(data.signedUrl, "_blank");
+    } catch (e: any) {
+      toast.error(e.message || "Could not open file");
     }
   }
 
