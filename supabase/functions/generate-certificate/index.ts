@@ -59,17 +59,37 @@ serve(async (req) => {
     // Fetch application: master_admin can fetch any, students only their own
     let query = supabaseService
       .from('applications')
-      .select('*, profiles(full_name), department_status(status, departments(name))')
+      .select('*')
       .eq('id', applicationId);
     if (!isMaster) query = query.eq('student_id', userId);
     const { data: app, error: appErr } = await query.single();
 
-    if (appErr || !app) throw new Error("Application not found or unauthorized.");
+    if (appErr || !app) {
+      console.error('Application lookup failed', { appErr, applicationId, userId, isMaster });
+      throw new Error("Application not found or unauthorized.");
+    }
     if (app.overall_status !== 'completed') {
       return new Response(JSON.stringify({ error: "Clearance is not yet completed." }), {
         status: 403,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
+    }
+
+    const [{ data: profile }, { data: deptStatuses, error: deptErr }] = await Promise.all([
+      supabaseService
+        .from('profiles')
+        .select('full_name')
+        .eq('id', app.student_id)
+        .maybeSingle(),
+      supabaseService
+        .from('department_status')
+        .select('status, departments(name)')
+        .eq('application_id', app.id),
+    ]);
+
+    if (deptErr) {
+      console.error('Department status lookup failed', { deptErr, applicationId: app.id });
+      throw new Error('Could not load department approvals.');
     }
 
     // Generate or fetch certificate reference
@@ -82,7 +102,7 @@ serve(async (req) => {
       }).eq('id', app.id);
     }
     
-    const depts = (app.department_status || []).map((ds: any) => ds.departments?.name).filter(Boolean);
+    const depts = (deptStatuses || []).map((ds: any) => ds.departments?.name).filter(Boolean);
 
     // Generate PDF using pdf-lib
     const pdfDoc = await PDFDocument.create();
@@ -104,7 +124,7 @@ serve(async (req) => {
     // Body
     page.drawText("This is to certify that", { x: W / 2 - 60, y: H - 220, size: 13, font: fontNormal, color: rgb(0.15, 0.15, 0.2) });
     
-    const nameStr = app.profiles?.full_name || "Student";
+    const nameStr = profile?.full_name || "Student";
     const nameWidth = fontBold.widthOfTextAtSize(nameStr, 26);
     page.drawText(nameStr, { x: W / 2 - (nameWidth / 2), y: H - 270, size: 26, font: fontBold, color: rgb(0, 0, 0) });
     
