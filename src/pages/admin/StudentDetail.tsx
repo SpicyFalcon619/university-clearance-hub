@@ -162,7 +162,12 @@ export default function StudentDetail() {
                   <div>
                     <div className="text-xs uppercase tracking-wide text-muted-foreground mb-1.5">Documents</div>
                     <ul className="space-y-1 text-sm">
-                      {appDocs.map(d => <li key={d.id}>{d.file_name} <span className="text-xs text-muted-foreground">({Math.round((d.size_bytes || 0) / 1024)} KB)</span></li>)}
+                      {appDocs.map(d => (
+                        <li key={d.id} className="flex items-center justify-between gap-2">
+                          <span>{d.file_name} <span className="text-xs text-muted-foreground">({Math.round((d.size_bytes || 0) / 1024)} KB)</span></span>
+                          <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => viewDoc(d)}>View</Button>
+                        </li>
+                      ))}
                     </ul>
                   </div>
                 )}
