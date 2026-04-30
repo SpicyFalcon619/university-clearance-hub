@@ -16,11 +16,20 @@ serve(async (req) => {
     const { applicationId } = await req.json();
     if (!applicationId) throw new Error("applicationId is required");
 
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    const token = authHeader.replace('Bearer ', '');
+
     // Initialize clients
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      { global: { headers: { Authorization: req.headers.get('Authorization')! } } }
+       { global: { headers: { Authorization: authHeader } } }
     );
     
     const supabaseService = createClient(
@@ -28,15 +37,21 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Verify auth
-    const { data: authUser, error: authErr } = await supabaseClient.auth.getUser();
-    if (authErr || !authUser?.user) throw new Error("Unauthorized");
+    // Verify auth from the incoming bearer token
+    const { data: claimsData, error: claimsError } = await supabaseClient.auth.getClaims(token);
+    const userId = claimsData?.claims?.sub;
+    if (claimsError || !userId) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
     // Check if requester is master_admin
     const { data: roleRow } = await supabaseService
       .from('user_roles')
       .select('role')
-      .eq('user_id', authUser.user.id)
+       .eq('user_id', userId)
       .eq('role', 'master_admin')
       .maybeSingle();
     const isMaster = !!roleRow;
@@ -46,7 +61,7 @@ serve(async (req) => {
       .from('applications')
       .select('*, profiles(full_name), department_status(status, departments(name))')
       .eq('id', applicationId);
-    if (!isMaster) query = query.eq('student_id', authUser.user.id);
+    if (!isMaster) query = query.eq('student_id', userId);
     const { data: app, error: appErr } = await query.single();
 
     if (appErr || !app) throw new Error("Application not found or unauthorized.");
