@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/StatusBadge";
 import { ArrowLeft, ShieldCheck, ShieldX, Download } from "lucide-react";
 import { toast } from "sonner";
-import { generateCertificate } from "@/lib/certificate";
 
 export default function StudentDetail() {
   const { id } = useParams();
