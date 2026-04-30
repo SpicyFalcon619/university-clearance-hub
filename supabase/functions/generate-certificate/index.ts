@@ -16,11 +16,20 @@ serve(async (req) => {
     const { applicationId } = await req.json();
     if (!applicationId) throw new Error("applicationId is required");
 
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    const token = authHeader.replace('Bearer ', '');
+
     // Initialize clients
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      { global: { headers: { Authorization: req.headers.get('Authorization')! } } }
+       { global: { headers: { Authorization: authHeader } } }
     );
     
     const supabaseService = createClient(
@@ -28,15 +37,21 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Verify auth
-    const { data: authUser, error: authErr } = await supabaseClient.auth.getUser();
-    if (authErr || !authUser?.user) throw new Error("Unauthorized");
+    // Verify auth from the incoming bearer token
+    const { data: claimsData, error: claimsError } = await supabaseClient.auth.getClaims(token);
+    const userId = claimsData?.claims?.sub;
+    if (claimsError || !userId) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
     // Check if requester is master_admin
     const { data: roleRow } = await supabaseService
       .from('user_roles')
       .select('role')
-      .eq('user_id', authUser.user.id)
+       .eq('user_id', userId)
       .eq('role', 'master_admin')
       .maybeSingle();
     const isMaster = !!roleRow;
@@ -44,17 +59,37 @@ serve(async (req) => {
     // Fetch application: master_admin can fetch any, students only their own
     let query = supabaseService
       .from('applications')
-      .select('*, profiles(full_name), department_status(status, departments(name))')
+      .select('*')
       .eq('id', applicationId);
-    if (!isMaster) query = query.eq('student_id', authUser.user.id);
+    if (!isMaster) query = query.eq('student_id', userId);
     const { data: app, error: appErr } = await query.single();
 
-    if (appErr || !app) throw new Error("Application not found or unauthorized.");
+    if (appErr || !app) {
+      console.error('Application lookup failed', { appErr, applicationId, userId, isMaster });
+      throw new Error("Application not found or unauthorized.");
+    }
     if (app.overall_status !== 'completed') {
       return new Response(JSON.stringify({ error: "Clearance is not yet completed." }), {
         status: 403,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
+    }
+
+    const [{ data: profile }, { data: deptStatuses, error: deptErr }] = await Promise.all([
+      supabaseService
+        .from('profiles')
+        .select('full_name')
+        .eq('id', app.student_id)
+        .maybeSingle(),
+      supabaseService
+        .from('department_status')
+        .select('status, departments(name)')
+        .eq('application_id', app.id),
+    ]);
+
+    if (deptErr) {
+      console.error('Department status lookup failed', { deptErr, applicationId: app.id });
+      throw new Error('Could not load department approvals.');
     }
 
     // Generate or fetch certificate reference
@@ -67,7 +102,7 @@ serve(async (req) => {
       }).eq('id', app.id);
     }
     
-    const depts = (app.department_status || []).map((ds: any) => ds.departments?.name).filter(Boolean);
+    const depts = (deptStatuses || []).map((ds: any) => ds.departments?.name).filter(Boolean);
 
     // Generate PDF using pdf-lib
     const pdfDoc = await PDFDocument.create();
@@ -89,7 +124,7 @@ serve(async (req) => {
     // Body
     page.drawText("This is to certify that", { x: W / 2 - 60, y: H - 220, size: 13, font: fontNormal, color: rgb(0.15, 0.15, 0.2) });
     
-    const nameStr = app.profiles?.full_name || "Student";
+    const nameStr = profile?.full_name || "Student";
     const nameWidth = fontBold.widthOfTextAtSize(nameStr, 26);
     page.drawText(nameStr, { x: W / 2 - (nameWidth / 2), y: H - 270, size: 26, font: fontBold, color: rgb(0, 0, 0) });
     
