@@ -6,7 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { StatusBadge } from "@/components/StatusBadge";
-import { Download, Search, Users, FileCheck2, Clock, AlertTriangle } from "lucide-react";
+import { Download, Search, Users, FileCheck2, Clock, AlertTriangle, Inbox, Sparkles } from "lucide-react";
+import { EmptyState } from "@/components/EmptyState";
+import { DashboardSkeleton } from "@/components/Skeletons";
 
 type AppRow = {
   id: string; student_id: string; course: string; batch: string; is_emergency: boolean;
@@ -20,10 +22,12 @@ export function MasterDashboard() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [q, setQ] = useState("");
   const [bottlenecks, setBottlenecks] = useState<{ name: string; pending: number }[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => { load(); }, []);
 
   async function load() {
+    setLoading(true);
     const { data } = await supabase.from("applications").select("*").order("created_at", { ascending: false });
     const list = (data as any[]) || [];
     const ids = Array.from(new Set(list.map(a => a.student_id)));
@@ -40,6 +44,7 @@ export function MasterDashboard() {
       counts.set(n, (counts.get(n) || 0) + 1);
     });
     setBottlenecks(Array.from(counts.entries()).map(([name, pending]) => ({ name, pending })).sort((a,b) => b.pending - a.pending));
+    setLoading(false);
   }
 
   const filtered = useMemo(() => apps.filter(a => {
@@ -67,8 +72,10 @@ export function MasterDashboard() {
     URL.revokeObjectURL(url);
   }
 
+  if (loading) return <DashboardSkeleton />;
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       <div className="flex flex-wrap justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold">Overview</h1>
@@ -108,7 +115,26 @@ export function MasterDashboard() {
           </CardHeader>
           <CardContent className="space-y-2">
             {filtered.length === 0 ? (
-              <div className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">No applications match your filter.</div>
+              q || statusFilter !== "all" ? (
+                <EmptyState
+                  icon={Search}
+                  title="No applications match your filter"
+                  description="Try clearing the search or changing the status filter."
+                  variant="neutral"
+                  action={
+                    <Button variant="outline" onClick={() => { setQ(""); setStatusFilter("all"); }}>
+                      Reset filters
+                    </Button>
+                  }
+                />
+              ) : (
+                <EmptyState
+                  icon={Inbox}
+                  title="No applications yet"
+                  description="Once students submit clearance applications, they'll appear here."
+                  variant="primary"
+                />
+              )
             ) : filtered.map(a => (
               <Link key={a.id} to={`/admin/students/${a.student_id}`} className="block rounded-lg border surface-1 p-3 flex flex-wrap items-center justify-between gap-3 hover:bg-secondary/40 transition-colors">
                 <div className="min-w-0">
@@ -131,7 +157,10 @@ export function MasterDashboard() {
           </CardHeader>
           <CardContent className="space-y-2">
             {bottlenecks.length === 0 ? (
-              <div className="text-sm text-muted-foreground">No pending requests anywhere. 🎉</div>
+              <div className="flex items-center gap-2 text-sm text-status-approved bg-status-approved-bg rounded-md p-2">
+                <Sparkles className="w-4 h-4" />
+                All clear — no pending requests anywhere.
+              </div>
             ) : bottlenecks.map(b => (
               <div key={b.name} className="flex items-center justify-between text-sm">
                 <span>{b.name}</span>

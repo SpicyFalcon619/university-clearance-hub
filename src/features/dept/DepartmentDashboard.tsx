@@ -7,8 +7,10 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { CheckCircle2, XCircle, Loader2, Siren, Undo2, Download } from "lucide-react";
+import { CheckCircle2, XCircle, Loader2, Siren, Undo2, Download, Inbox, FileCheck2 } from "lucide-react";
 import { toast } from "sonner";
+import { EmptyState } from "@/components/EmptyState";
+import { QueueSkeleton } from "@/components/Skeletons";
 
 type QueueRow = {
   ds_id: string;
@@ -115,7 +117,7 @@ export function DepartmentDashboard() {
   const denied = rows.filter(r => r.status === "denied");
 
   if (!departmentId) return <div className="text-sm text-muted-foreground">No department assigned. Contact Master Admin.</div>;
-  if (loading) return <div className="text-sm text-muted-foreground">Loading queue…</div>;
+  if (loading) return <QueueSkeleton />;
 
   return (
     <div className="space-y-6">
@@ -142,13 +144,34 @@ export function DepartmentDashboard() {
           <TabsTrigger value="denied">Denied ({denied.length})</TabsTrigger>
         </TabsList>
         <TabsContent value="pending" className="space-y-2 mt-4">
-          {pending.length === 0 ? <Empty label="No pending requests" /> : pending.map(r => <Row key={r.ds_id} r={r} now={now} onReview={openReview} onUndo={undo} />)}
+          {pending.length === 0 ? (
+            <EmptyState
+              icon={Inbox}
+              title="Inbox zero"
+              description="No pending requests right now. Great work keeping the queue clear!"
+              variant="success"
+            />
+          ) : pending.map(r => <Row key={r.ds_id} r={r} now={now} onReview={openReview} onUndo={undo} />)}
         </TabsContent>
         <TabsContent value="approved" className="space-y-2 mt-4">
-          {approved.length === 0 ? <Empty label="No approved requests yet" /> : approved.map(r => <Row key={r.ds_id} r={r} now={now} onReview={openReview} onUndo={undo} />)}
+          {approved.length === 0 ? (
+            <EmptyState
+              icon={FileCheck2}
+              title="No approvals yet"
+              description="Approved requests will appear here for reference."
+              variant="neutral"
+            />
+          ) : approved.map(r => <Row key={r.ds_id} r={r} now={now} onReview={openReview} onUndo={undo} />)}
         </TabsContent>
         <TabsContent value="denied" className="space-y-2 mt-4">
-          {denied.length === 0 ? <Empty label="No denied requests" /> : denied.map(r => <Row key={r.ds_id} r={r} now={now} onReview={openReview} onUndo={undo} />)}
+          {denied.length === 0 ? (
+            <EmptyState
+              icon={XCircle}
+              title="No denied requests"
+              description="Nothing has been denied yet."
+              variant="neutral"
+            />
+          ) : denied.map(r => <Row key={r.ds_id} r={r} now={now} onReview={openReview} onUndo={undo} />)}
         </TabsContent>
       </Tabs>
 
