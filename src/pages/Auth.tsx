@@ -59,8 +59,8 @@ export default function Auth() {
   return (
     <div className="min-h-screen bg-surface-2 flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md space-y-6">
-        <Link to="/" className="flex items-center gap-2 justify-center font-semibold text-lg">
-          <div className="w-8 h-8 rounded-md bg-foreground text-background flex items-center justify-center">
+        <Link to="/" className="flex items-center gap-2 justify-center font-semibold text-lg text-primary">
+          <div className="w-8 h-8 rounded-md text-background flex items-center justify-center bg-primary">
             <GraduationCap className="w-4 h-4" />
           </div>
           ClearPath
