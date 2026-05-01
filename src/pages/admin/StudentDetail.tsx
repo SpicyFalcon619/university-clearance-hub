@@ -5,6 +5,7 @@ import { AppShell } from "@/components/AppShell";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/StatusBadge";
+import { AuditTimeline } from "@/components/AuditTimeline";
 import { ArrowLeft, ShieldCheck, ShieldX, Download } from "lucide-react";
 import { toast } from "sonner";
 
@@ -173,17 +174,8 @@ export default function StudentDetail() {
                 )}
 
                 <div>
-                  <div className="text-xs uppercase tracking-wide text-muted-foreground mb-1.5">Audit trail</div>
-                  {appAudit.length === 0 ? <div className="text-sm text-muted-foreground">No actions yet.</div> : (
-                    <ul className="space-y-1 text-xs">
-                      {appAudit.map(a => (
-                        <li key={a.id} className="border-l-2 border-border pl-2 py-0.5">
-                          <span className="font-medium">{a.action}</span> · {new Date(a.created_at).toLocaleString()}
-                          {a.comments && <div className="text-muted-foreground">{a.comments}</div>}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
+                  <div className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Audit trail</div>
+                  <AuditTimeline entries={appAudit} />
                 </div>
               </CardContent>
             </Card>
