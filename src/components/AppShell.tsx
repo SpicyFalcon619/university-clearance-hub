@@ -2,8 +2,9 @@ import { ReactNode, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { GraduationCap, LayoutDashboard, FileText, LogOut, Bell, Building2, Users } from "lucide-react";
+import { GraduationCap, LayoutDashboard, FileText, LogOut, Bell, Building2, Users, Sun, Moon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTheme } from "@/contexts/ThemeContext";
 
 type NavItem = { to: string; label: string; Icon: any };
 
@@ -71,6 +72,7 @@ function AnimatedTabs({ items }: { items: NavItem[] }) {
 export function AppShell({ children }: { children: ReactNode }) {
   const { role, signOut, user } = useAuth();
   const navigate = useNavigate();
+  const { theme, toggleTheme } = useTheme();
 
   const studentNav: NavItem[] = [
     { to: "/", label: "Dashboard", Icon: LayoutDashboard },
@@ -108,6 +110,15 @@ export function AppShell({ children }: { children: ReactNode }) {
                 <Bell className="w-4 h-4" />
               </Button>
             )}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleTheme}
+              aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+              className="hover-scale"
+            >
+              {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            </Button>
             <span className="hidden sm:inline text-xs text-muted-foreground max-w-[180px] truncate">{user?.email}</span>
             <Button variant="ghost" size="icon" onClick={async () => { await signOut(); navigate("/auth"); }} aria-label="Sign out">
               <LogOut className="w-4 h-4" />
