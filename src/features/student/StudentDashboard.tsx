@@ -100,16 +100,17 @@ export function StudentDashboard() {
       </div>
 
       {!active ? (
-        <Card className="border-dashed">
-          <CardContent className="py-16 text-center space-y-3">
-            <div className="w-12 h-12 rounded-full bg-secondary mx-auto flex items-center justify-center">
-              <FileText className="w-5 h-5 text-muted-foreground" />
-            </div>
-            <h3 className="font-medium">No applications yet</h3>
-            <p className="text-sm text-muted-foreground max-w-sm mx-auto">Start your clearance process by submitting a new application.</p>
-            <Button asChild><Link to="/apply"><Plus className="w-4 h-4 mr-1.5" />Start Application</Link></Button>
-          </CardContent>
-        </Card>
+        <EmptyState
+          icon={FileText}
+          title="No applications yet"
+          description="Start your clearance process by submitting a new application — we'll guide you through every department."
+          variant="primary"
+          action={
+            <Button asChild className="hover-scale">
+              <Link to="/apply"><Plus className="w-4 h-4 mr-1.5" />Start Application</Link>
+            </Button>
+          }
+        />
       ) : (
         <ApplicationCard
           app={active}
