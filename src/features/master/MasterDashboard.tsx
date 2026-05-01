@@ -44,6 +44,7 @@ export function MasterDashboard() {
       counts.set(n, (counts.get(n) || 0) + 1);
     });
     setBottlenecks(Array.from(counts.entries()).map(([name, pending]) => ({ name, pending })).sort((a,b) => b.pending - a.pending));
+    setLoading(false);
   }
 
   const filtered = useMemo(() => apps.filter(a => {
