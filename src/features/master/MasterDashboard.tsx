@@ -6,7 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { StatusBadge } from "@/components/StatusBadge";
-import { Download, Search, Users, FileCheck2, Clock, AlertTriangle } from "lucide-react";
+import { Download, Search, Users, FileCheck2, Clock, AlertTriangle, Inbox, Sparkles } from "lucide-react";
+import { EmptyState } from "@/components/EmptyState";
+import { DashboardSkeleton } from "@/components/Skeletons";
 
 type AppRow = {
   id: string; student_id: string; course: string; batch: string; is_emergency: boolean;
@@ -20,10 +22,12 @@ export function MasterDashboard() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [q, setQ] = useState("");
   const [bottlenecks, setBottlenecks] = useState<{ name: string; pending: number }[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => { load(); }, []);
 
   async function load() {
+    setLoading(true);
     const { data } = await supabase.from("applications").select("*").order("created_at", { ascending: false });
     const list = (data as any[]) || [];
     const ids = Array.from(new Set(list.map(a => a.student_id)));
