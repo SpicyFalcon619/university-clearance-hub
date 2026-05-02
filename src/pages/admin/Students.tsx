@@ -155,15 +155,53 @@ export default function Students() {
                         }`}>
                           {role === "master_admin" ? "Master Admin" : role === "dept_admin" ? `Dept Admin · ${deptName || "—"}` : "Student"}
                         </span>
-                        <Button
-                          size="sm"
-                          variant={isEditing ? "secondary" : "ghost"}
-                          onClick={() => isEditing
-                            ? setAssign(null)
-                            : setAssign({ userId: u.id, role, deptId: deptId || "" })}
-                        >
-                          {isEditing ? "Close" : "Edit role"}
-                        </Button>
+                        {u.id === user?.id ? (
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-secondary border border-border text-muted-foreground">You</span>
+                        ) : (
+                          <>
+                            <Button
+                              size="sm"
+                              variant={isEditing ? "secondary" : "ghost"}
+                              onClick={() => isEditing
+                                ? setAssign(null)
+                                : setAssign({ userId: u.id, role, deptId: deptId || "" })}
+                            >
+                              {isEditing ? "Close" : "Edit role"}
+                            </Button>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="text-status-denied hover:text-status-denied hover:bg-status-denied/10"
+                                  disabled={deletingId === u.id}
+                                  title="Delete user"
+                                >
+                                  {deletingId === u.id
+                                    ? <Loader2 className="w-4 h-4 animate-spin" />
+                                    : <Trash2 className="w-4 h-4" />}
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Delete this user?</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    This permanently removes <span className="font-medium">{u.full_name || u.email}</span> and their account, profile, and roles. This action cannot be undone.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    className="bg-status-denied text-white hover:bg-status-denied/90"
+                                    onClick={() => deleteUser(u.id)}
+                                  >
+                                    Delete
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </>
+                        )}
                         <Button asChild size="sm" variant="ghost"><Link to={`/admin/students/${u.id}`}><ChevronRight className="w-4 h-4" /></Link></Button>
                       </div>
                     </CardContent>
