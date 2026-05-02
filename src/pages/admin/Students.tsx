@@ -1,23 +1,30 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { AppShell } from "@/components/AppShell";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { ChevronRight, Users as UsersIcon, Loader2, X } from "lucide-react";
+import { ChevronRight, Users as UsersIcon, Loader2, X, Trash2 } from "lucide-react";
 import { EmptyState } from "@/components/EmptyState";
 import { ListRowSkeleton } from "@/components/Skeletons";
 
 export default function Students() {
+  const { user } = useAuth();
   const [users, setUsers] = useState<any[]>([]);
   const [depts, setDepts] = useState<any[]>([]);
   const [q, setQ] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [assign, setAssign] = useState<{ userId: string; role: string; deptId: string } | null>(null);
 
   useEffect(() => { load(); }, []);
@@ -41,6 +48,10 @@ export default function Students() {
 
   async function applyRole() {
     if (!assign) return;
+    if (assign.userId === user?.id) {
+      toast.error("You can't change your own role");
+      return;
+    }
     setSaving(true);
     try {
       await supabase.from("user_roles").delete().eq("user_id", assign.userId).in("role", ["dept_admin", "master_admin"]);
@@ -57,6 +68,39 @@ export default function Students() {
       await load();
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function deleteUser(userId: string) {
+    if (userId === user?.id) {
+      toast.error("You can't delete your own account");
+      return;
+    }
+    setDeletingId(userId);
+    try {
+      const { data: sess } = await supabase.auth.getSession();
+      const token = sess?.session?.access_token;
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/delete-user`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          },
+          body: JSON.stringify({ userId }),
+        }
+      );
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(body.error || `Failed (${res.status})`);
+      toast.success("User deleted");
+      if (assign?.userId === userId) setAssign(null);
+      await load();
+    } catch (e: any) {
+      toast.error(e.message || "Failed to delete user");
+    } finally {
+      setDeletingId(null);
     }
   }
 
@@ -111,15 +155,53 @@ export default function Students() {
                         }`}>
                           {role === "master_admin" ? "Master Admin" : role === "dept_admin" ? `Dept Admin · ${deptName || "—"}` : "Student"}
                         </span>
-                        <Button
-                          size="sm"
-                          variant={isEditing ? "secondary" : "ghost"}
-                          onClick={() => isEditing
-                            ? setAssign(null)
-                            : setAssign({ userId: u.id, role, deptId: deptId || "" })}
-                        >
-                          {isEditing ? "Close" : "Edit role"}
-                        </Button>
+                        {u.id === user?.id ? (
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-secondary border border-border text-muted-foreground">You</span>
+                        ) : (
+                          <>
+                            <Button
+                              size="sm"
+                              variant={isEditing ? "secondary" : "ghost"}
+                              onClick={() => isEditing
+                                ? setAssign(null)
+                                : setAssign({ userId: u.id, role, deptId: deptId || "" })}
+                            >
+                              {isEditing ? "Close" : "Edit role"}
+                            </Button>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="text-status-denied hover:text-status-denied hover:bg-status-denied/10"
+                                  disabled={deletingId === u.id}
+                                  title="Delete user"
+                                >
+                                  {deletingId === u.id
+                                    ? <Loader2 className="w-4 h-4 animate-spin" />
+                                    : <Trash2 className="w-4 h-4" />}
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Delete this user?</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    This permanently removes <span className="font-medium">{u.full_name || u.email}</span> and their account, profile, and roles. This action cannot be undone.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    className="bg-status-denied text-white hover:bg-status-denied/90"
+                                    onClick={() => deleteUser(u.id)}
+                                  >
+                                    Delete
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </>
+                        )}
                         <Button asChild size="sm" variant="ghost"><Link to={`/admin/students/${u.id}`}><ChevronRight className="w-4 h-4" /></Link></Button>
                       </div>
                     </CardContent>

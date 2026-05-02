@@ -107,15 +107,15 @@ export default function Apply() {
             <CardContent className="grid sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <Label htmlFor="course">Course / Program</Label>
-                <Input id="course" placeholder="B.Tech Computer Science" required value={form.course} onChange={(e) => setForm({ ...form, course: e.target.value })} />
+                <Input id="course" placeholder="BSc in CSE / BBA / BSc in EEE" required value={form.course} onChange={(e) => setForm({ ...form, course: e.target.value })} />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="batch">Batch / Year</Label>
-                <Input id="batch" placeholder="2021–2025" required value={form.batch} onChange={(e) => setForm({ ...form, batch: e.target.value })} />
+                <Label htmlFor="batch">Batch / Trimester</Label>
+                <Input id="batch" placeholder="221 / Spring 2025" required value={form.batch} onChange={(e) => setForm({ ...form, batch: e.target.value })} />
               </div>
               <div className="space-y-1.5 sm:col-span-2">
                 <Label htmlFor="reason">Reason for clearance (optional)</Label>
-                <Textarea id="reason" maxLength={500} placeholder="Final graduation, transfer, etc." value={form.reason} onChange={(e) => setForm({ ...form, reason: e.target.value })} />
+                <Textarea id="reason" maxLength={500} placeholder="Graduation, semester drop, transfer, etc." value={form.reason} onChange={(e) => setForm({ ...form, reason: e.target.value })} />
               </div>
             </CardContent>
           </Card>

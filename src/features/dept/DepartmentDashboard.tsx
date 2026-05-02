@@ -227,7 +227,7 @@ export function DepartmentDashboard() {
             <DialogTitle>Deny request</DialogTitle>
             <DialogDescription>Provide a clear reason / dues description. The student will see this.</DialogDescription>
           </DialogHeader>
-          <Textarea required maxLength={500} placeholder="e.g., Outstanding library fine of ₹250 unpaid." value={denyComment} onChange={(e) => setDenyComment(e.target.value)} />
+          <Textarea required maxLength={500} placeholder="e.g., Outstanding library fine of ৳500 unpaid." value={denyComment} onChange={(e) => setDenyComment(e.target.value)} />
           <DialogFooter>
             <Button variant="ghost" onClick={() => setDenyOpen(false)}>Cancel</Button>
             <Button variant="destructive" onClick={() => reviewing && deny(reviewing, denyComment)}>Confirm denial</Button>
