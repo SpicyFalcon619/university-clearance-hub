@@ -18,11 +18,13 @@ import { EmptyState } from "@/components/EmptyState";
 import { ListRowSkeleton } from "@/components/Skeletons";
 
 export default function Students() {
+  const { user } = useAuth();
   const [users, setUsers] = useState<any[]>([]);
   const [depts, setDepts] = useState<any[]>([]);
   const [q, setQ] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [assign, setAssign] = useState<{ userId: string; role: string; deptId: string } | null>(null);
 
   useEffect(() => { load(); }, []);
