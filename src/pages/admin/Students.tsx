@@ -48,6 +48,10 @@ export default function Students() {
 
   async function applyRole() {
     if (!assign) return;
+    if (assign.userId === user?.id) {
+      toast.error("You can't change your own role");
+      return;
+    }
     setSaving(true);
     try {
       await supabase.from("user_roles").delete().eq("user_id", assign.userId).in("role", ["dept_admin", "master_admin"]);
@@ -64,6 +68,39 @@ export default function Students() {
       await load();
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function deleteUser(userId: string) {
+    if (userId === user?.id) {
+      toast.error("You can't delete your own account");
+      return;
+    }
+    setDeletingId(userId);
+    try {
+      const { data: sess } = await supabase.auth.getSession();
+      const token = sess?.session?.access_token;
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/delete-user`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          },
+          body: JSON.stringify({ userId }),
+        }
+      );
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(body.error || `Failed (${res.status})`);
+      toast.success("User deleted");
+      if (assign?.userId === userId) setAssign(null);
+      await load();
+    } catch (e: any) {
+      toast.error(e.message || "Failed to delete user");
+    } finally {
+      setDeletingId(null);
     }
   }
 
