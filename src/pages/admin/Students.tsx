@@ -1,14 +1,19 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { AppShell } from "@/components/AppShell";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { ChevronRight, Users as UsersIcon, Loader2, X } from "lucide-react";
+import { ChevronRight, Users as UsersIcon, Loader2, X, Trash2 } from "lucide-react";
 import { EmptyState } from "@/components/EmptyState";
 import { ListRowSkeleton } from "@/components/Skeletons";
 
