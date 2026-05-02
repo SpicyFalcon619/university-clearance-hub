@@ -56,13 +56,33 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Cleanup app data first
+    // Cleanup app data first (no FK cascades exist)
+    // Find applications owned by this user, then delete dependent rows.
+    const { data: apps } = await admin
+      .from("applications").select("id").eq("student_id", userId);
+    const appIds = (apps || []).map((a: { id: string }) => a.id);
+
+    if (appIds.length > 0) {
+      await admin.from("audit_log").delete().in("application_id", appIds);
+      await admin.from("department_status").delete().in("application_id", appIds);
+      await admin.from("documents").delete().in("application_id", appIds);
+      await admin.from("notifications").delete().in("application_id", appIds);
+      await admin.from("applications").delete().in("id", appIds);
+    }
+
+    // Audit/document rows where this user was the actor/uploader but app belongs to someone else
+    await admin.from("audit_log").delete().eq("actor_id", userId);
+    await admin.from("documents").delete().eq("uploaded_by", userId);
+
     await admin.from("user_roles").delete().eq("user_id", userId);
     await admin.from("notifications").delete().eq("user_id", userId);
     await admin.from("profiles").delete().eq("id", userId);
 
     const { error: delErr } = await admin.auth.admin.deleteUser(userId);
-    if (delErr) throw delErr;
+    if (delErr) {
+      console.error("auth.admin.deleteUser failed:", delErr);
+      throw delErr;
+    }
 
     return new Response(JSON.stringify({ success: true }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
