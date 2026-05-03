@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Notifications · UIU ClearPath</title>
+<link rel="stylesheet" href="assets/styles.css">
+</head>
+<body class="appshell">
+<main>
+  <div class="row mb-4">
+    <div>
+      <h1 style="font-size:1.5rem">Notifications</h1>
+      <p class="muted">Updates from the clearance system.</p>
+    </div>
+    <button class="btn btn-outline" id="all">Mark all read</button>
+  </div>
+  <div id="list" class="stack"><div class="sk" style="height:60px"></div></div>
+</main>
+
+<script type="module">
+import { api, toast, $, escapeHtml, requireAuth, mountShell } from "./assets/app.js";
+const me = await requireAuth();
+if (!me) throw 0;
+mountShell(me, "notifications.html");
+
+async function load() {
+  const { notifications } = await api("notifications.php?action=list");
+  $("#list").innerHTML = notifications.length
+    ? notifications.map(n => `
+      <div class="card card-pad row" style="${+n.read ? "opacity:.65" : ""}">
+        <div>
+          <div class="font-medium text-sm">${escapeHtml(n.title)}</div>
+          <div class="muted text-xs">${escapeHtml(n.body || "")} · ${new Date(n.created_at).toLocaleString()}</div>
+        </div>
+        ${+n.read ? "" : `<button class="btn btn-ghost btn-sm" data-id="${n.id}">Mark read</button>`}
+      </div>`).join("")
+    : `<div class="empty"><div class="e-icon">🔔</div><h3>You're all caught up</h3>
+       <p>New updates will appear here as your clearance progresses.</p></div>`;
+
+  $("#list").querySelectorAll("[data-id]").forEach(b => b.onclick = async () => {
+    await api("notifications.php?action=mark_read", { method: "POST", body: { id: b.dataset.id } });
+    load();
+  });
+}
+$("#all").onclick = async () => {
+  await api("notifications.php?action=mark_all_read", { method: "POST" });
+  toast("All marked read", "ok"); load();
+};
+load();
+</script>
+</body>
+</html>

@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Departments · UIU ClearPath</title>
+<link rel="stylesheet" href="assets/styles.css">
+</head>
+<body class="appshell">
+<main>
+  <div class="row mb-4">
+    <div>
+      <h1 style="font-size:1.5rem">Departments</h1>
+      <p class="muted">Manage clearance departments routed for new applications.</p>
+    </div>
+    <button class="btn" id="add">＋ New Department</button>
+  </div>
+  <div id="list" class="stack"><div class="sk" style="height:80px"></div></div>
+</main>
+
+<script type="module">
+import { api, toast, $, escapeHtml, openModal, requireAuth, mountShell } from "./assets/app.js";
+const me = await requireAuth(["master_admin"]);
+if (!me) throw 0;
+mountShell(me, "departments.html");
+
+async function load() {
+  const { departments } = await api("departments.php?action=list");
+  $("#list").innerHTML = departments.map(d => `
+    <div class="card card-pad row">
+      <div>
+        <div class="font-medium text-sm">${escapeHtml(d.name)}
+          ${+d.active ? "" : `<span class="badge b-neutral">Inactive</span>`}</div>
+        <div class="muted text-xs">${escapeHtml(d.description || "—")}</div>
+      </div>
+      <div class="flex gap-2">
+        <button class="btn btn-ghost btn-sm" data-edit='${escapeHtml(JSON.stringify(d))}'>Edit</button>
+      </div>
+    </div>`).join("") || `<div class="empty"><div class="e-icon">🏢</div>
+      <h3>No departments yet</h3><p>Create your first department to start routing requests.</p></div>`;
+
+  $("#list").querySelectorAll("[data-edit]").forEach(b =>
+    b.onclick = () => deptForm(JSON.parse(b.dataset.edit)));
+}
+
+function deptForm(d) {
+  const isNew = !d;
+  const m = openModal(`
+    <h3>${isNew ? "New" : "Edit"} department</h3>
+    <div class="stack mt-2">
+      <div><label>Name</label><input id="n" value="${escapeHtml(d?.name || "")}"></div>
+      <div><label>Description</label><textarea id="desc">${escapeHtml(d?.description || "")}</textarea></div>
+      ${isNew ? "" : `<label class="row" style="font-weight:500"><span>Active</span>
+        <input type="checkbox" id="act" ${+d.active ? "checked" : ""} style="width:auto"></label>`}
+    </div>
+    <div class="actions">
+      <button class="btn btn-ghost" id="cancel">Cancel</button>
+      <button class="btn" id="save">Save</button>
+    </div>`);
+  m.el.querySelector("#cancel").onclick = m.close;
+  m.el.querySelector("#save").onclick = async () => {
+    const body = {
+      name: m.el.querySelector("#n").value,
+      description: m.el.querySelector("#desc").value,
+      active: isNew ? 1 : (m.el.querySelector("#act").checked ? 1 : 0),
+      ...(isNew ? {} : { id: d.id }),
+    };
+    try {
+      await api(`departments.php?action=${isNew ? "create" : "update"}`, { method: "POST", body });
+      toast("Saved", "ok"); m.close(); load();
+    } catch (e) { toast(e.message, "err"); }
+  };
+}
+
+$("#add").onclick = () => deptForm(null);
+load();
+</script>
+</body>
+</html>

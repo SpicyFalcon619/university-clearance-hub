@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sign in · UIU ClearPath</title>
+<link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+<div class="auth-wrap">
+  <div class="auth-card stack">
+    <a class="logo" href="index.html" style="justify-content:center;font-size:1.1rem">
+      <span class="logo-mark">🎓</span>
+      <span>UIU <span class="brand-text">ClearPath</span></span>
+    </a>
+    <div class="card card-pad">
+      <h2 class="card-title">Welcome</h2>
+      <p class="card-desc mb-4">Sign in to manage your university clearance.</p>
+
+      <div class="auth-tabs">
+        <button data-tab="login"  class="active">Sign in</button>
+        <button data-tab="signup">Sign up</button>
+      </div>
+
+      <form id="loginForm" class="stack">
+        <div><label>Email</label><input name="email" type="email" required></div>
+        <div><label>Password</label><input name="password" type="password" required></div>
+        <button class="btn full" type="submit">Sign in</button>
+      </form>
+
+      <form id="signupForm" class="stack hidden">
+        <div><label>Full name</label><input name="full_name" required></div>
+        <div><label>Email</label><input name="email" type="email" required></div>
+        <div><label>UIU Student ID (optional)</label><input name="student_id" placeholder="e.g. 011221234"></div>
+        <div><label>Password</label><input name="password" type="password" minlength="8" required></div>
+        <button class="btn full" type="submit">Create account</button>
+      </form>
+
+      <p class="muted text-xs mt-4" style="text-align:center">
+        New accounts start as Students. Admin roles are assigned by Master Admin.
+      </p>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { api, toast, $, $$, initTheme } from "./assets/app.js";
+initTheme();
+
+const tabs   = $$(".auth-tabs button");
+const login  = $("#loginForm");
+const signup = $("#signupForm");
+tabs.forEach(t => t.onclick = () => {
+  tabs.forEach(x => x.classList.toggle("active", x === t));
+  const isLogin = t.dataset.tab === "login";
+  login.classList.toggle("hidden", !isLogin);
+  signup.classList.toggle("hidden",  isLogin);
+});
+
+login.onsubmit = async (e) => {
+  e.preventDefault();
+  const fd = Object.fromEntries(new FormData(login));
+  try { await api("auth.php?action=login", { method: "POST", body: fd });
+    location.href = "index.html";
+  } catch (err) { toast(err.message, "err"); }
+};
+
+signup.onsubmit = async (e) => {
+  e.preventDefault();
+  const fd = Object.fromEntries(new FormData(signup));
+  try { await api("auth.php?action=signup", { method: "POST", body: fd });
+    location.href = "index.html";
+  } catch (err) { toast(err.message, "err"); }
+};
+</script>
+</body>
+</html>

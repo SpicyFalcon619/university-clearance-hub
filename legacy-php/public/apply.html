@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>New Application · UIU ClearPath</title>
+<link rel="stylesheet" href="assets/styles.css">
+</head>
+<body class="appshell">
+<main>
+  <div style="max-width:48rem;margin:0 auto" class="stack">
+    <div>
+      <h1 style="font-size:1.5rem">New clearance application</h1>
+      <p class="muted">Provide your details and upload supporting documents.</p>
+    </div>
+
+    <form id="applyForm" class="stack">
+      <div class="card">
+        <div class="card-head"><div class="card-title">Course details</div></div>
+        <div class="card-pad grid-2">
+          <div><label>Course / Program</label>
+            <input name="course" placeholder="BSc in CSE / BBA / BSc in EEE" required></div>
+          <div><label>Batch / Trimester</label>
+            <input name="batch" placeholder="221 / Spring 2025" required></div>
+          <div style="grid-column:1/-1"><label>Reason for clearance (optional)</label>
+            <textarea name="reason" maxlength="500"
+              placeholder="Graduation, semester drop, transfer, etc."></textarea></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">Supporting documents</div>
+          <div class="card-desc">PDF or JPG · max 5MB each</div>
+        </div>
+        <div class="card-pad stack">
+          <label id="dropZone" style="display:block;border:2px dashed var(--border);
+                                      border-radius:.625rem;padding:2rem;text-align:center;cursor:pointer">
+            <div style="font-size:1.5rem">⬆</div>
+            <div class="font-medium mt-2">Drag &amp; drop or click to upload</div>
+            <div class="muted text-xs">PDF, JPG up to 5MB</div>
+            <input id="fileInput" type="file" multiple accept=".pdf,.jpg,.jpeg" hidden>
+          </label>
+          <ul id="fileList" class="stack"></ul>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">🚨 Emergency request</div>
+          <div class="card-desc">Mark this application as urgent for prioritized review.</div>
+        </div>
+        <div class="card-pad stack">
+          <label class="row" style="font-weight:500">
+            <span>Mark as urgent</span>
+            <input type="checkbox" name="is_emergency" id="urgent" style="width:auto">
+          </label>
+          <div id="justWrap" class="hidden">
+            <label>Justification</label>
+            <textarea name="emergency_justification" maxlength="500"
+                      placeholder="Explain why this needs urgent processing"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div id="deptList" class="card card-pad text-sm muted"></div>
+
+      <div class="row" style="justify-content:flex-end">
+        <a class="btn btn-ghost" href="index.html">Cancel</a>
+        <button class="btn" type="submit" id="submitBtn">Submit application</button>
+      </div>
+    </form>
+  </div>
+</main>
+
+<script type="module">
+import { api, toast, $, escapeHtml, requireAuth, mountShell } from "./assets/app.js";
+const me = await requireAuth(["student"]);
+if (!me) throw 0;
+mountShell(me, "apply.html");
+
+const { departments } = await api("departments.php?action=list");
+$("#deptList").innerHTML = `Departments routed: <span class="font-medium">${
+  departments.filter(d => d.active).map(d => escapeHtml(d.name)).join(", ")}</span>`;
+
+const urgent  = $("#urgent");
+urgent.onchange = () => $("#justWrap").classList.toggle("hidden", !urgent.checked);
+
+const fileInput = $("#fileInput");
+const fileList  = $("#fileList");
+const drop      = $("#dropZone");
+const ALLOWED   = ["application/pdf", "image/jpeg"];
+const MAX       = 5 * 1024 * 1024;
+let files = [];
+
+drop.onclick = () => fileInput.click();
+drop.ondragover = (e) => { e.preventDefault(); drop.style.background = "var(--muted-bg)"; };
+drop.ondragleave = () => drop.style.background = "";
+drop.ondrop = (e) => { e.preventDefault(); drop.style.background = ""; addFiles(e.dataTransfer.files); };
+fileInput.onchange = () => addFiles(fileInput.files);
+
+function addFiles(list) {
+  for (const f of list) {
+    if (!ALLOWED.includes(f.type)) { toast(`${f.name}: only PDF or JPG`, "err"); continue; }
+    if (f.size > MAX)              { toast(`${f.name}: max 5MB`, "err"); continue; }
+    files.push(f);
+  }
+  renderFiles();
+}
+function renderFiles() {
+  fileList.innerHTML = files.map((f, i) => `
+    <li class="card card-pad row" style="padding:.5rem .75rem">
+      <span>📄 ${escapeHtml(f.name)} <span class="muted text-xs">${(f.size/1024).toFixed(0)} KB</span></span>
+      <button type="button" class="btn btn-ghost btn-sm" data-i="${i}">✕</button>
+    </li>`).join("");
+  fileList.querySelectorAll("button").forEach(b =>
+    b.onclick = () => { files.splice(+b.dataset.i, 1); renderFiles(); });
+}
+
+$("#applyForm").onsubmit = async (e) => {
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  const body = {
+    course: fd.get("course"),
+    batch:  fd.get("batch"),
+    reason: fd.get("reason"),
+    is_emergency: !!fd.get("is_emergency"),
+    emergency_justification: fd.get("emergency_justification"),
+  };
+  if (!files.length) return toast("Please upload at least one supporting document", "err");
+  $("#submitBtn").disabled = true;
+  try {
+    const { id } = await api("applications.php?action=create", { method: "POST", body });
+    for (const f of files) {
+      const form = new FormData();
+      form.append("application_id", id);
+      form.append("file", f);
+      await api("documents.php?action=upload", { method: "POST", form });
+    }
+    toast("Application submitted", "ok");
+    location.href = "index.html";
+  } catch (err) { toast(err.message, "err"); $("#submitBtn").disabled = false; }
+};
+</script>
+</body>
+</html>

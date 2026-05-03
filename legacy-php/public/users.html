@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Users · UIU ClearPath</title>
+<link rel="stylesheet" href="assets/styles.css">
+</head>
+<body class="appshell">
+<main>
+  <div class="row mb-4">
+    <div>
+      <h1 style="font-size:1.5rem">Users</h1>
+      <p class="muted">All accounts — students and administrators. Search and assign roles.</p>
+    </div>
+    <input id="q" placeholder="Search…" style="max-width:18rem">
+  </div>
+  <div id="list" class="stack"><div class="sk" style="height:80px"></div></div>
+</main>
+
+<script type="module">
+import { api, toast, $, escapeHtml, openModal, requireAuth, mountShell } from "./assets/app.js";
+const me = await requireAuth(["master_admin"]);
+if (!me) throw 0;
+mountShell(me, "users.html");
+
+let users = [], depts = [];
+
+async function load() {
+  ([{ users }, { departments: depts }] = await Promise.all([
+    api("users.php?action=list"),
+    api("departments.php?action=list"),
+  ]));
+  // re-bind after destructuring
+  state.users = users; state.depts = depts;
+  draw();
+}
+const state = { users: [], depts: [] };
+
+function draw() {
+  const s = $("#q").value.toLowerCase();
+  const rows = state.users.filter(u =>
+    !s || (u.full_name || "").toLowerCase().includes(s)
+       || (u.email || "").toLowerCase().includes(s));
+
+  const list = $("#list");
+  if (!rows.length) {
+    list.innerHTML = `<div class="empty"><div class="e-icon">👥</div>
+      <h3>No users match</h3><p>Try a different name or email.</p></div>`;
+    return;
+  }
+  list.innerHTML = rows.map(u => {
+    const isMe = u.id === me.user.id;
+    const dept = state.depts.find(d => d.id === u.department_id);
+    const roleLabel = u.role === "master_admin" ? "Master Admin"
+                    : u.role === "dept_admin"   ? `Dept Admin · ${dept?.name || "—"}`
+                    : "Student";
+    const roleClass = u.role === "master_admin" ? "b-primary"
+                    : u.role === "dept_admin"   ? "b-pending" : "b-neutral";
+    return `
+      <div class="card card-pad row" data-row="${u.id}">
+        <div style="min-width:0">
+          <div class="font-medium text-sm">${escapeHtml(u.full_name || "—")}</div>
+          <div class="muted text-xs truncate">${escapeHtml(u.email)}</div>
+        </div>
+        <div class="flex center gap-2">
+          <span class="badge ${roleClass}">${roleLabel}</span>
+          ${isMe
+            ? `<span class="badge b-neutral">You</span>`
+            : `<button class="btn btn-ghost btn-sm" data-edit="${u.id}">Edit role</button>
+               <button class="btn btn-ghost btn-sm" style="color:var(--err)" data-del="${u.id}">🗑</button>`}
+        </div>
+      </div>`;
+  }).join("");
+
+  list.querySelectorAll("[data-edit]").forEach(b =>
+    b.onclick = () => editRole(state.users.find(u => u.id === b.dataset.edit)));
+  list.querySelectorAll("[data-del]").forEach(b =>
+    b.onclick = () => delUser(state.users.find(u => u.id === b.dataset.del)));
+}
+
+function editRole(u) {
+  const opts = state.depts.map(d => `<option value="${d.id}">${escapeHtml(d.name)}</option>`).join("");
+  const m = openModal(`
+    <h3>Edit role for ${escapeHtml(u.full_name || u.email)}</h3>
+    <div class="grid-2 mt-2">
+      <div><label>Role</label>
+        <select id="role">
+          <option value="student">Student</option>
+          <option value="dept_admin">Department Admin</option>
+          <option value="master_admin">Master Admin</option>
+        </select></div>
+      <div id="deptWrap"><label>Department</label><select id="dept">${opts}</select></div>
+    </div>
+    <div class="actions">
+      <button class="btn btn-ghost" id="cancel">Cancel</button>
+      <button class="btn" id="save">Save</button>
+    </div>`);
+  m.el.querySelector("#role").value = u.role;
+  m.el.querySelector("#dept").value = u.department_id || (state.depts[0]?.id || "");
+  const sync = () => m.el.querySelector("#deptWrap").classList.toggle(
+    "hidden", m.el.querySelector("#role").value !== "dept_admin");
+  sync(); m.el.querySelector("#role").onchange = sync;
+  m.el.querySelector("#cancel").onclick = m.close;
+  m.el.querySelector("#save").onclick = async () => {
+    const role = m.el.querySelector("#role").value;
+    const department_id = role === "dept_admin" ? m.el.querySelector("#dept").value : null;
+    try { await api("users.php?action=set_role", { method: "POST",
+            body: { user_id: u.id, role, department_id } });
+      toast("Role updated", "ok"); m.close(); load();
+    } catch (e) { toast(e.message, "err"); }
+  };
+}
+
+function delUser(u) {
+  const m = openModal(`
+    <h3>Delete this user?</h3>
+    <p class="muted text-sm">This permanently removes <b>${escapeHtml(u.full_name || u.email)}</b>
+       and their account, profile, and roles. This action cannot be undone.</p>
+    <div class="actions">
+      <button class="btn btn-ghost" id="cancel">Cancel</button>
+      <button class="btn btn-danger" id="ok">Delete</button>
+    </div>`);
+  m.el.querySelector("#cancel").onclick = m.close;
+  m.el.querySelector("#ok").onclick = async () => {
+    try { await api("users.php?action=delete", { method: "POST", body: { user_id: u.id } });
+      toast("User deleted", "ok"); m.close(); load();
+    } catch (e) { toast(e.message, "err"); }
+  };
+}
+
+$("#q").oninput = draw;
+load();
+</script>
+</body>
+</html>
