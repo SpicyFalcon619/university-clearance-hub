@@ -1,0 +1,8 @@
+# Block direct access to sensitive folders.
+<FilesMatch "\.(sql|md)$">
+  Require all denied
+</FilesMatch>
+
+<DirectoryMatch "(config|api/_internal)">
+  Require all denied
+</DirectoryMatch>
