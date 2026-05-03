@@ -24,18 +24,17 @@ const me = await requireAuth(["master_admin"]);
 if (!me) throw 0;
 mountShell(me, "users.html");
 
-let users = [], depts = [];
+const state = { users: [], depts: [] };
 
 async function load() {
-  ([{ users }, { departments: depts }] = await Promise.all([
+  const [u, d] = await Promise.all([
     api("users.php?action=list"),
     api("departments.php?action=list"),
-  ]));
-  // re-bind after destructuring
-  state.users = users; state.depts = depts;
+  ]);
+  state.users = u.users;
+  state.depts = d.departments;
   draw();
 }
-const state = { users: [], depts: [] };
 
 function draw() {
   const s = $("#q").value.toLowerCase();
