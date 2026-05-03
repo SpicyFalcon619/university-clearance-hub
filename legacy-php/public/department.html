@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Department Queue · UIU ClearPath</title>
+<link rel="stylesheet" href="assets/styles.css">
+</head>
+<body class="appshell">
+<main>
+  <div class="row mb-4">
+    <div>
+      <h1 style="font-size:1.5rem">Department Queue</h1>
+      <p class="muted">Review and act on clearance requests assigned to your department.</p>
+    </div>
+  </div>
+  <div id="queue" class="stack"><div class="sk" style="height:90px"></div></div>
+</main>
+
+<script type="module">
+import { api, toast, $, escapeHtml, badgeHtml, openModal, requireAuth, mountShell } from "./assets/app.js";
+const me = await requireAuth(["dept_admin"]);
+if (!me) throw 0;
+mountShell(me, "department.html");
+
+async function load() {
+  const { queue } = await api("departments.php?action=queue");
+  const root = $("#queue");
+  if (!queue.length) {
+    root.innerHTML = `
+      <div class="empty">
+        <div class="e-icon">📥</div>
+        <h3>Inbox zero</h3>
+        <p>No pending requests right now. Great work keeping the queue clear!</p>
+      </div>`;
+    return;
+  }
+  root.innerHTML = queue.map(r => `
+    <div class="card card-pad row">
+      <div>
+        <div class="font-medium text-sm">${escapeHtml(r.full_name || "Student")}
+          ${+r.is_emergency ? badgeHtml("emergency") : ""}</div>
+        <div class="muted text-xs">${escapeHtml(r.course)} · ${escapeHtml(r.batch)} · ${escapeHtml(r.email || "")}</div>
+      </div>
+      <div class="flex center gap-2">
+        ${badgeHtml(r.status)}
+        <button class="btn btn-sm btn-outline" data-deny="${r.id}">✕ Deny</button>
+        <button class="btn btn-sm" data-app="${r.id}">✓ Approve</button>
+      </div>
+    </div>`).join("");
+
+  root.querySelectorAll("[data-app]").forEach(b => b.onclick = () => act(b.dataset.app, "approved"));
+  root.querySelectorAll("[data-deny]").forEach(b => b.onclick = () => denyDialog(b.dataset.deny));
+}
+
+async function act(id, decision, comments = null) {
+  try {
+    await api("departments.php?action=review", { method: "POST", body: { id, decision, comments } });
+    toast(decision === "approved" ? "Approved" : "Denied", "ok");
+    load();
+  } catch (e) { toast(e.message, "err"); }
+}
+
+function denyDialog(id) {
+  const m = openModal(`
+    <h3>Deny request</h3>
+    <p class="muted text-sm mb-2">Provide a clear reason / dues description. The student will see this.</p>
+    <textarea id="dc" maxlength="500" placeholder="e.g., Outstanding library fine of ৳500 unpaid."></textarea>
+    <div class="actions">
+      <button class="btn btn-ghost" id="cancel">Cancel</button>
+      <button class="btn btn-danger" id="ok">Confirm denial</button>
+    </div>`);
+  m.el.querySelector("#cancel").onclick = m.close;
+  m.el.querySelector("#ok").onclick = async () => {
+    const c = m.el.querySelector("#dc").value.trim();
+    if (!c) return toast("Comment required for denial", "err");
+    m.close(); await act(id, "denied", c);
+  };
+}
+
+load();
+</script>
+</body>
+</html>

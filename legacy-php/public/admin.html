@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Overview · UIU ClearPath</title>
+<link rel="stylesheet" href="assets/styles.css">
+</head>
+<body class="appshell">
+<main id="root">
+  <div class="sk" style="height:140px"></div>
+</main>
+
+<script type="module">
+import { api, $, escapeHtml, badgeHtml, requireAuth, mountShell } from "./assets/app.js";
+const me = await requireAuth(["master_admin"]);
+if (!me) throw 0;
+mountShell(me, "admin.html");
+
+const { applications } = await api("applications.php?action=list");
+const total      = applications.length;
+const completed  = applications.filter(a => a.overall_status === "completed").length;
+const inProgress = applications.filter(a => a.overall_status === "in_progress").length;
+const action     = applications.filter(a => a.overall_status === "action_required").length;
+const rate       = total ? Math.round((completed / total) * 100) : 0;
+
+$("#root").innerHTML = `
+  <div class="row mb-4">
+    <div>
+      <h1 style="font-size:1.5rem">Overview</h1>
+      <p class="muted">Global metrics, search, and clearance management.</p>
+    </div>
+    <button class="btn btn-outline" id="csv">⬇ Export CSV</button>
+  </div>
+
+  <div class="grid-2" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr))">
+    ${stat("👥","Total applications", total)}
+    ${stat("✅","Completion rate",   rate + "%")}
+    ${stat("⏳","In progress",       inProgress)}
+    ${stat("⚠",  "Action required", action, "danger")}
+  </div>
+
+  <div class="card mt-6">
+    <div class="card-head row">
+      <div class="card-title">Applications</div>
+      <input id="q" placeholder="Search name, email, course…" style="max-width:18rem">
+    </div>
+    <div class="card-pad stack" id="appList"></div>
+  </div>`;
+
+function stat(icon, lbl, val, tone = "") {
+  return `<div class="card card-pad stat">
+    <div class="ic ${tone}">${icon}</div>
+    <div><div class="lbl">${lbl}</div><div class="val">${val}</div></div>
+  </div>`;
+}
+
+const list = $("#appList");
+const q    = $("#q");
+const draw = () => {
+  const s = q.value.toLowerCase();
+  const rows = applications.filter(a =>
+    !s || (a.full_name || "").toLowerCase().includes(s)
+       || (a.email || "").toLowerCase().includes(s)
+       || a.course.toLowerCase().includes(s));
+  if (!rows.length) {
+    list.innerHTML = `<div class="empty"><div class="e-icon">📂</div>
+      <h3>No applications match</h3><p>Try clearing the search.</p></div>`;
+    return;
+  }
+  list.innerHTML = rows.map(a => `
+    <div class="card card-pad row">
+      <div>
+        <div class="font-medium text-sm">${escapeHtml(a.full_name || "Student")}
+          ${+a.is_emergency ? badgeHtml("emergency") : ""}</div>
+        <div class="muted text-xs">${escapeHtml(a.course)} · ${escapeHtml(a.batch)} · ${escapeHtml(a.email || "")}</div>
+      </div>
+      ${badgeHtml(a.overall_status)}
+    </div>`).join("");
+};
+q.oninput = draw; draw();
+
+$("#csv").onclick = () => {
+  const header = ["ID","Student","Email","Course","Batch","Status","Emergency","Created"];
+  const rows = applications.map(a => [a.id, a.full_name||"", a.email||"", a.course, a.batch,
+                                      a.overall_status, +a.is_emergency ? "yes":"no", a.created_at]);
+  const csv = [header, ...rows].map(r => r.map(v =>
+    `"${String(v).replace(/"/g,'""')}"`).join(",")).join("\n");
+  const blob = new Blob([csv], { type: "text/csv" });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement("a");
+  a.href = url; a.download = `clearance-report-${Date.now()}.csv`; a.click();
+  URL.revokeObjectURL(url);
+};
+</script>
+</body>
+</html>

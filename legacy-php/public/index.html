@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dashboard · UIU ClearPath</title>
+<link rel="stylesheet" href="assets/styles.css">
+</head>
+<body class="appshell">
+<main id="root">
+  <div class="sk" style="height:120px"></div>
+</main>
+
+<script type="module">
+import { requireAuth, mountShell } from "./assets/app.js";
+const me = await requireAuth();
+if (me) {
+  // Route to role-appropriate landing page.
+  if (me.user.role === "master_admin") return location.href = "admin.html";
+  if (me.user.role === "dept_admin")   return location.href = "department.html";
+  mountShell(me, "index.html");
+  await (await import("./assets/student.js")).renderStudent();
+}
+</script>
+</body>
+</html>
