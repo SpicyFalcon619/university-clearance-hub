@@ -7,7 +7,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { Plus } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 export default function Departments() {
   const [depts, setDepts] = useState<any[]>([]);
@@ -29,6 +33,22 @@ export default function Departments() {
 
   async function toggle(id: string, active: boolean) {
     await supabase.from("departments").update({ active }).eq("id", id);
+    load();
+  }
+
+  async function remove(id: string, name: string) {
+    // Block delete if any department_status rows reference it (preserves audit history).
+    const { count } = await supabase
+      .from("department_status")
+      .select("id", { count: "exact", head: true })
+      .eq("department_id", id);
+    if ((count ?? 0) > 0) {
+      toast.error(`Cannot delete "${name}" — it's referenced by ${count} clearance record(s). Mark it inactive instead.`);
+      return;
+    }
+    const { error } = await supabase.from("departments").delete().eq("id", id);
+    if (error) { toast.error(error.message); return; }
+    toast.success(`Deleted "${name}"`);
     load();
   }
 
@@ -62,6 +82,25 @@ export default function Departments() {
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-muted-foreground">{d.active ? "Active" : "Inactive"}</span>
                   <Switch checked={d.active} onCheckedChange={(v) => toggle(d.id, v)} />
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" title="Delete department">
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Delete "{d.name}"?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This permanently removes the department. If it's already linked to any clearance applications, the delete will be blocked — mark it inactive instead.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => remove(d.id, d.name)}>Delete</AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </div>
               </CardContent>
             </Card>
