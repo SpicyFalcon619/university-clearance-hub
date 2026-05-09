@@ -19,7 +19,7 @@ university course requirement. The Lovable React build remains intact.
 
 Default master-admin login (created by the seed):
 
-    email:    admin@uiu.ac.bd
+    email:    admin@university.edu
     password: Admin@123
 
 > The seed hash in `database_setup.sql` is a placeholder. Re-hash with

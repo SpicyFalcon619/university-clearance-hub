@@ -1,5 +1,5 @@
 -- =====================================================================
--- UIU Clearance System — MySQL Schema (XAMPP / MariaDB / MySQL 8+)
+-- Clearance System — MySQL Schema (XAMPP / MariaDB / MySQL 8+)
 -- Phase 1: Migrated from Supabase (PostgreSQL) to raw MySQL.
 --
 -- Type mapping notes (Postgres -> MySQL):
