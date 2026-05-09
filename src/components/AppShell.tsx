@@ -98,7 +98,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               <div className="w-8 h-8 rounded-lg brand-gradient text-primary-foreground flex items-center justify-center shadow-elevate-sm">
                 <GraduationCap className="w-4 h-4" />
               </div>
-              <span className="text-base">UIU <span className="brand-text-gradient">ClearPath</span></span>
+              <span className="text-base"><span className="brand-text-gradient">ClearPath</span></span>
             </Link>
             <nav className="hidden md:block">
               <AnimatedTabs items={nav} />
