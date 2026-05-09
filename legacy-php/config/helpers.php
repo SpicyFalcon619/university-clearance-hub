@@ -1,6 +1,6 @@
 <?php
 // =====================================================================
-// UIU Clearance — Shared helpers (sessions, JSON I/O, auth guards, UUID)
+// Clearance — Shared helpers (sessions, JSON I/O, auth guards, UUID)
 // =====================================================================
 
 declare(strict_types=1);

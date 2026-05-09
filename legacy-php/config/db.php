@@ -1,6 +1,6 @@
 <?php
 // =====================================================================
-// UIU Clearance — Database connection (PDO / MySQL)
+// Clearance — Database connection (PDO / MySQL)
 // Adjust credentials to match your XAMPP setup.
 // =====================================================================
 

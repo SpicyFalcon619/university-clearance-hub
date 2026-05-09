@@ -1,5 +1,5 @@
 /* =====================================================================
-   UIU ClearPath — shared client helpers (toast, fetch, dom, theme)
+   ClearPath — shared client helpers (toast, fetch, dom, theme)
    ===================================================================== */
 
 export const $  = (sel, root = document) => root.querySelector(sel);
@@ -142,7 +142,7 @@ export function mountShell(me, currentPath) {
       <div class="flex center" style="gap:2rem">
         <a class="logo" href="index.html">
           <span class="logo-mark">🎓</span>
-          <span>UIU <span class="brand-text">ClearPath</span></span>
+          <span><span class="brand-text">ClearPath</span></span>
         </a>
         <span id="navslot"></span>
       </div>

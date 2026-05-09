@@ -5,7 +5,7 @@ type Ctx = { theme: Theme; toggleTheme: () => void; setTheme: (t: Theme) => void
 
 const ThemeCtx = createContext<Ctx | undefined>(undefined);
 
-const STORAGE_KEY = "uiu-theme";
+const STORAGE_KEY = "clearpath-theme";
 
 function getInitial(): Theme {
   if (typeof window === "undefined") return "light";
