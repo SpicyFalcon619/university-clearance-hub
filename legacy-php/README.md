@@ -1,4 +1,4 @@
-# UIU Clearance — Legacy PHP / MySQL build
+# Clearance — Legacy PHP / MySQL build
 
 A vanilla PHP + MySQL re-implementation of the React/Supabase app for the
 university course requirement. The Lovable React build remains intact.

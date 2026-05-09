@@ -226,7 +226,7 @@ DELIMITER ;
 -- SEED DATA
 -- A few starter departments + a master admin you can log in with.
 -- Default master-admin credentials:
---   email:    admin@uiu.ac.bd
+--   email:    admin@university.edu
 --   password: Admin@123      (bcrypt hash below — change after first login)
 -- =====================================================================
 
@@ -239,11 +239,11 @@ INSERT INTO departments (id, name, description, active) VALUES
 
 SET @admin_id = UUID();
 INSERT INTO users (id, email, password_hash) VALUES
-  (@admin_id, 'admin@uiu.ac.bd',
+  (@admin_id, 'admin@university.edu',
    '$2y$10$E2nQH4pQHk9c7wbq3oJp1uYwS6mC3l8O6m6QvCk8p3v0i7T0Z9b0W');
 
 INSERT INTO profiles (id, full_name, email)
-  VALUES (@admin_id, 'UIU Master Admin', 'admin@uiu.ac.bd');
+  VALUES (@admin_id, 'Master Admin', 'admin@university.edu');
 
 INSERT INTO user_roles (id, user_id, role)
   VALUES (UUID(), @admin_id, 'master_admin');
